@@ -562,7 +562,7 @@ const AdminDashboard: React.FC = () => {
                 <Shield className="h-8 w-8 text-emerald-600" />
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-                  <p className="text-sm text-gray-500">Platform Management</p>
+                  <p className="text-sm text-gray-500">DIRECT-CONNECTt</p>
                 </div>
               </div>
             </div>
