@@ -49,7 +49,8 @@ export default function LoginPage() {
       // Use window.location.href instead of navigate() for full page reload
       window.location.href = '/professional/dashboard';
     } else if (userType === 'admin') {
-      window.location.href = '/';
+      //window.location.href = '/';
+      window.location.href = '/admin';  // Changed from '/' to '/admin'
     } else {
       // Client or default
       window.location.href = '/';

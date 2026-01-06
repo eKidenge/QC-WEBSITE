@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import PaymentPage from './components/PaymentPage';
 import PaymentSuccessPage from './components/PaymentSuccessPage';
 import ProfessionalDashboard from './components/ProfessionalDashboard';
+import AdminDashboard from './components/AdminDashboard'; // Import the Admin Dashboard
 
 // Protected Homepage - only shows if logged in
 function ProtectedHomePage() {
@@ -74,6 +75,20 @@ function isClient() {
   }
 }
 
+// Check if user is an admin - NEW function
+function isAdmin() {
+  const user = localStorage.getItem('user');
+  if (!user) return false;
+  
+  try {
+    const userData = JSON.parse(user);
+    // Check both possible field names
+    return userData.role === 'admin' || userData.user_type === 'admin';
+  } catch (e) {
+    return false;
+  }
+}
+
 function App() {
   return (
     <Router>
@@ -90,6 +105,20 @@ function App() {
         <Route path="/professional/dashboard" element={
           isLoggedIn() && isProfessional() ? 
             <ProfessionalDashboard /> : 
+            <Navigate to="/login" />
+        } />
+        
+        {/* Admin Dashboard - only accessible by admins */}
+        <Route path="/admin" element={
+          isLoggedIn() && isAdmin() ? 
+            <AdminDashboard /> : 
+            <Navigate to="/login" />
+        } />
+        
+        {/* Admin sub-routes - all protected by admin check */}
+        <Route path="/admin/*" element={
+          isLoggedIn() && isAdmin() ? 
+            <AdminDashboard /> : 
             <Navigate to="/login" />
         } />
         
