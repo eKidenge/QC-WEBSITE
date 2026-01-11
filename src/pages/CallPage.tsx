@@ -165,7 +165,7 @@ export default function CallPage() {
     }
   };
 
-  // Poll for call status - UPDATED
+  // Poll for call status - FIXED: Removed duplicate 'connecting' case
   const startPollingCallStatus = (requestId: number) => {
     // Clear any existing interval
     if (pollIntervalRef.current) {
@@ -201,7 +201,7 @@ export default function CallPage() {
           const callRequest = await response.json();
           console.log('📞 Call request status:', callRequest.status);
           
-          // Handle different statuses
+          // Handle different statuses - FIXED: Combined 'accepted' and 'connecting'
           switch(callRequest.status) {
             case 'ringing':
               console.log('🔔 Professional is ringing!');
@@ -209,9 +209,10 @@ export default function CallPage() {
               break;
               
             case 'accepted':
-              console.log('✅ Professional accepted!');
+            case 'connecting':  // Both statuses trigger room join
+              console.log('✅ Professional accepted/connecting!');
               clearInterval(pollIntervalRef.current!);
-              // Professional accepted, join the room
+              // Professional accepted or connecting, join the room
               joinRoomAfterAcceptance(callRequest.call_type || 'video');
               break;
               
@@ -230,11 +231,6 @@ export default function CallPage() {
               setCallRequestStatus('idle');
               setCallRequestId(null);
               alert(`Call ${callRequest.status}. Please try again.`);
-              break;
-              
-            case 'connecting':
-              console.log('🔌 Professional is connecting...');
-              setCallRequestStatus('connecting');
               break;
               
             case 'connected':
