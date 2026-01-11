@@ -46,8 +46,8 @@ export default function PaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
   // ========== ADD THESE TWO LINES ==========
-  console.log("🔍 DEBUG - Payment Page location.state:", location.state);
-  console.log("🔍 DEBUG - Payment Details:", paymentDetails);
+  //console.log("🔍 DEBUG - Payment Page location.state:", location.state);
+  //console.log("🔍 DEBUG - Payment Details:", paymentDetails);
   // =========================================
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
