@@ -303,7 +303,7 @@ export default function ConsultationMatcher({
       case 'initial':
         return 'DIRECT-CONNECT';
       case 'searching':
-        return 'Finding the Best Match...';
+        return 'DIRECT-CONNECT..';
       case 'found':
         return 'Perfect Match Found!';
       case 'not_found':
