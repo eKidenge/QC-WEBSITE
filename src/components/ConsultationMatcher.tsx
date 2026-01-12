@@ -301,7 +301,7 @@ export default function ConsultationMatcher({
   const getStageTitle = () => {
     switch (matchStage) {
       case 'initial':
-        return 'DIRECT-CONNECT: Talk to your profession';
+        return 'DIRECT-CONNECT';
       case 'searching':
         return 'Finding the Best Match...';
       case 'found':
@@ -320,7 +320,7 @@ export default function ConsultationMatcher({
       case 'initial':
         return `Click start to find the best ${categoryName.toLowerCase()} professional for you`;
       case 'searching':
-        return 'Using AI to analyze availability, ratings, experience, and response times...';
+        return 'Skip the search, Get the answer...';
       case 'found':
         return 'We found a verified professional ready to help you';
       case 'not_found':
@@ -801,7 +801,7 @@ export default function ConsultationMatcher({
             <div className="space-y-6">
               <div className="text-center p-8">
                 <Loader2 className="w-16 h-16 text-emerald-600 animate-spin mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Finding Your Match</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">DIRECT-CONNECT</h3>
                 <p className="text-gray-600">
                   Creating consultation and matching with best professional...
                 </p>
