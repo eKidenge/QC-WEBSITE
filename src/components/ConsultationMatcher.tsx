@@ -301,7 +301,7 @@ export default function ConsultationMatcher({
   const getStageTitle = () => {
     switch (matchStage) {
       case 'initial':
-        return 'DIRECT-CONNECT: Skip the search, Get the answer';
+        return 'DIRECT-CONNECT: Talk to your profession';
       case 'searching':
         return 'Finding the Best Match...';
       case 'found':
@@ -371,7 +371,7 @@ export default function ConsultationMatcher({
     
     if (score >= 80) {
       color = 'text-emerald-600 bg-emerald-50';
-      label = 'Excellent Match';
+      label = 'Get the Answer';
     } else if (score >= 60) {
       color = 'text-blue-600 bg-blue-50';
       label = 'Good Match';
@@ -383,7 +383,7 @@ export default function ConsultationMatcher({
     return (
       <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${color}`}>
         <Zap size={14} className="mr-1" />
-        AI Score: {score}/100 • {label}
+        Skip the Search: {score}/100 • {label}
       </div>
     );
   };
