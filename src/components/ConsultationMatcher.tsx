@@ -301,7 +301,7 @@ export default function ConsultationMatcher({
   const getStageTitle = () => {
     switch (matchStage) {
       case 'initial':
-        return 'Find Your Expert';
+        return 'DIRECT-CONNECT: Skip the search, Get the answer';
       case 'searching':
         return 'Finding the Best Match...';
       case 'found':
