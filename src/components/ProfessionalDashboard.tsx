@@ -165,7 +165,7 @@ const ProfessionalDashboard = () => {
       const appID = 1178040486;
       const serverSecret = "373ecf17185d1d8c94b03169895a336e";
       const professionalName = getUserName();
-      const roomId = `room_${professionalId}`;
+      const roomId = `room_1`; // FIXED: Use room_1 instead of room_${professionalId}
       
       console.log('🚀 Initializing Zego for professional:', {
         professionalId,
@@ -301,7 +301,7 @@ const ProfessionalDashboard = () => {
           amount: call.amount || 0,
           category: call.category || 'Consultation',
           status: 'pending',
-          room_id: call.room_id || `room_${getProfessionalId()}`,
+          room_id: call.room_id || `room_1`, // FIXED: Use room_1
           expires_at: call.expires_at || new Date(Date.now() + 60000).toISOString(),
           created_at: call.created_at || new Date().toISOString()
         }));
@@ -408,8 +408,8 @@ const ProfessionalDashboard = () => {
         connected_at: new Date().toISOString()
       });
       
-      // 4. Join the room
-      const roomId = acceptedCall.room_id || `room_${professionalId}`;
+      // 4. CRITICAL FIX: Use room_1 to match client
+      const roomId = `room_1`; // FIXED: Use room_1 instead of acceptedCall.room_id
       const professionalName = getUserName();
       
       console.log('🎯 Joining Zego room:', roomId);
@@ -420,7 +420,7 @@ const ProfessionalDashboard = () => {
       const TOKEN = ZegoUIKitPrebuilt.generateKitTokenForTest(
         appID, 
         serverSecret,
-        roomId,
+        roomId, // FIXED: Using room_1
         String(professionalId), 
         professionalName
       );
@@ -690,7 +690,7 @@ const ProfessionalDashboard = () => {
               <div>
                 <h2 className="font-bold text-lg">Active Call with {currentCall?.client_name || 'Client'}</h2>
                 <p className="text-sm text-gray-300">
-                  Room: room_{getProfessionalId()}
+                  Room: room_1 {/* FIXED: Show room_1 */}
                   {currentCall && (
                     <span className="ml-4">• Duration: {currentCall.duration || 30} min</span>
                   )}
