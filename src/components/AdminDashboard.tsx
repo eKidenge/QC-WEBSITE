@@ -425,7 +425,6 @@ const AdminDashboard: React.FC = () => {
           'Authorization': `Token ${token}`,
           'Content-Type': 'application/json'
         },
-        #body: JSON.stringify(newProfessionalData)
         body: JSON.stringify({
         user: newProfessionalData.user,
         hourly_rate: newProfessionalData.professional.hourly_rate,
