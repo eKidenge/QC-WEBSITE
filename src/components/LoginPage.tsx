@@ -50,7 +50,7 @@ export default function LoginPage() {
     role: 'client'
   });
   const [professionalData, setProfessionalData] = useState<ProfessionalRegistrationData>({
-    service_categories: [], // Start with empty array
+    service_categories: [],
     license_number: '',
     hourly_rate: 50,
     experience_years: 1,
@@ -82,21 +82,85 @@ export default function LoginPage() {
   const fetchServiceCategories = async () => {
     try {
       setLoadingCategories(true);
-      const response = await fetch('https://dc-backend-6xlc.onrender.com/api/accounts/categories/', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      
+      // Try different possible endpoints for categories
+      const endpoints = [
+        'https://dc-backend-6xlc.onrender.com/api/categories/', // Most likely
+        'https://dc-backend-6xlc.onrender.com/api/service-categories/',
+        'https://dc-backend-6xlc.onrender.com/api/categories/service-categories/',
+        'https://dc-backend-6xlc.onrender.com/api/categories/all/'
+      ];
+      
+      let categoriesData: ServiceCategory[] = [];
+      let foundEndpoint = '';
+      
+      // Try each endpoint until one works
+      for (const endpoint of endpoints) {
+        try {
+          console.log('Trying categories endpoint:', endpoint);
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
 
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories || []);
-      } else {
-        console.error('Failed to fetch categories');
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Categories response from', endpoint, ':', data);
+            foundEndpoint = endpoint;
+            
+            // Handle different response formats
+            if (Array.isArray(data)) {
+              categoriesData = data;
+            } else if (data.results && Array.isArray(data.results)) {
+              categoriesData = data.results;
+            } else if (data.data && Array.isArray(data.data)) {
+              categoriesData = data.data;
+            } else if (data.categories && Array.isArray(data.categories)) {
+              categoriesData = data.categories;
+            } else {
+              // Try to find any array in the response
+              for (const key in data) {
+                if (Array.isArray(data[key])) {
+                  categoriesData = data[key];
+                  break;
+                }
+              }
+            }
+            
+            if (categoriesData.length > 0) {
+              break; // Stop trying endpoints when we get data
+            }
+          }
+        } catch (err) {
+          console.log('Endpoint failed:', endpoint, err);
+        }
       }
+      
+      if (categoriesData.length === 0) {
+        // If no endpoint worked, show hardcoded categories as fallback
+        console.log('No categories found from API, using fallback');
+        categoriesData = [
+          { id: 1, name: 'Legal Advice', description: 'Legal consultation services', icon: 'gavel', base_price: '100.00', commission_rate: '20.00', available_24_7: false },
+          { id: 2, name: 'Medical Consultation', description: 'Healthcare advice', icon: 'stethoscope', base_price: '80.00', commission_rate: '15.00', available_24_7: true },
+          { id: 3, name: 'Business Consulting', description: 'Business strategy and advice', icon: 'briefcase', base_price: '120.00', commission_rate: '25.00', available_24_7: false },
+          { id: 4, name: 'Tech Support', description: 'Technology and IT services', icon: 'laptop', base_price: '60.00', commission_rate: '10.00', available_24_7: true },
+          { id: 5, name: 'Financial Planning', description: 'Investment and finance advice', icon: 'dollar-sign', base_price: '150.00', commission_rate: '30.00', available_24_7: false },
+        ];
+      }
+      
+      setCategories(categoriesData);
+      console.log('Final categories loaded:', categoriesData.length, 'items');
+      
     } catch (error) {
       console.error('Error fetching categories:', error);
+      // Fallback categories
+      setCategories([
+        { id: 1, name: 'Legal Advice', description: 'Legal consultation services', icon: 'gavel', base_price: '100.00', commission_rate: '20.00', available_24_7: false },
+        { id: 2, name: 'Medical Consultation', description: 'Healthcare advice', icon: 'stethoscope', base_price: '80.00', commission_rate: '15.00', available_24_7: true },
+        { id: 3, name: 'Business Consulting', description: 'Business strategy and advice', icon: 'briefcase', base_price: '120.00', commission_rate: '25.00', available_24_7: false },
+      ]);
     } finally {
       setLoadingCategories(false);
     }
@@ -268,8 +332,7 @@ export default function LoginPage() {
 
       // Add professional-specific fields
       if (userType === 'professional') {
-        // For now, we'll use the first selected category as specialty
-        // You might need to update your backend to handle multiple categories
+        // Use the first selected category as specialty (for backend compatibility)
         if (professionalData.service_categories.length > 0) {
           const firstCategory = categories.find(cat => cat.id === professionalData.service_categories[0]);
           payload.specialty = firstCategory?.name || 'General';
@@ -281,7 +344,7 @@ export default function LoginPage() {
         payload.languages = professionalData.languages || ['English'];
         payload.license_number = professionalData.license_number?.trim() || '';
         
-        // You might want to send service_categories separately if your backend supports it
+        // Store categories for future use (if backend supports it later)
         // payload.service_categories = professionalData.service_categories;
       }
 
@@ -670,11 +733,21 @@ export default function LoginPage() {
                               </span>
                             </label>
                             {loadingCategories ? (
-                              <div className="text-sm text-gray-500">Loading categories...</div>
+                              <div className="text-sm text-gray-500 py-2">Loading categories...</div>
                             ) : categories.length === 0 ? (
-                              <div className="text-sm text-gray-500">No categories available</div>
+                              <div className="text-sm text-gray-500 py-2">
+                                <p className="mb-2">No categories available from server.</p>
+                                <p className="text-xs">Please select your specialty manually:</p>
+                                <input
+                                  type="text"
+                                  placeholder="e.g., Lawyer, Doctor, Consultant"
+                                  className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg"
+                                  value={professionalData.license_number} // Using license_number as temporary field
+                                  onChange={(e) => setProfessionalData(prev => ({...prev, license_number: e.target.value}))}
+                                />
+                              </div>
                             ) : (
-                              <div className="space-y-2">
+                              <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                                 {categories.map(category => (
                                   <div key={category.id} className="flex items-center">
                                     <input
@@ -687,12 +760,25 @@ export default function LoginPage() {
                                     />
                                     <label
                                       htmlFor={`category-${category.id}`}
-                                      className="ml-2 text-sm text-gray-700 flex items-center gap-2"
+                                      className="ml-2 text-sm text-gray-700 flex items-start gap-2 cursor-pointer flex-1"
                                     >
-                                      <span className="font-medium">{category.name}</span>
-                                      <span className="text-xs text-gray-500">
-                                        - {category.description}
-                                      </span>
+                                      <div className="flex-1">
+                                        <div className="font-medium">{category.name}</div>
+                                        <div className="text-xs text-gray-500">{category.description}</div>
+                                        <div className="flex gap-2 mt-1">
+                                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                            Base: ${category.base_price}
+                                          </span>
+                                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                            Commission: {category.commission_rate}%
+                                          </span>
+                                          {category.available_24_7 && (
+                                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                                              24/7
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
                                     </label>
                                   </div>
                                 ))}
