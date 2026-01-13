@@ -1,7 +1,7 @@
 // src/components/LoginPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, UserCheck, Users } from 'lucide-react';
 
 interface LoginFormData {
   username: string;
@@ -11,6 +11,7 @@ interface LoginFormData {
   phone?: string;
   first_name?: string;
   last_name?: string;
+  role?: 'client' | 'professional'; // Add role field
 }
 
 export default function LoginPage() {
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [userType, setUserType] = useState<'client' | 'professional'>('client'); // Default to client
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
     password: '',
@@ -25,7 +27,8 @@ export default function LoginPage() {
     phone: '',
     first_name: '',
     last_name: '',
-    password_confirm: ''
+    password_confirm: '',
+    role: 'client'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +49,10 @@ export default function LoginPage() {
     const userType = userData.user_type || userData.role || 'client';
     
     if (userType === 'professional') {
-      // Use window.location.href instead of navigate() for full page reload
       window.location.href = '/professional/dashboard';
     } else if (userType === 'admin') {
-      //window.location.href = '/';
-      window.location.href = '/admin';  // Changed from '/' to '/admin'
+      window.location.href = '/admin';
     } else {
-      // Client or default
       window.location.href = '/';
     }
   };
@@ -64,6 +64,14 @@ export default function LoginPage() {
       [name]: value
     }));
     setError(null);
+  };
+
+  const handleUserTypeChange = (type: 'client' | 'professional') => {
+    setUserType(type);
+    setFormData(prev => ({
+      ...prev,
+      role: type
+    }));
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -101,13 +109,11 @@ export default function LoginPage() {
         throw new Error(errorMessage);
       }
 
-      // Save token and user data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
       setSuccess('Login successful! Redirecting...');
       
-      // Role-based redirect
       setTimeout(() => {
         redirectBasedOnRole(data.user);
       }, 500);
@@ -138,18 +144,28 @@ export default function LoginPage() {
     }
 
     try {
-      // Registration always creates client accounts by default
-      // If you need professional registration, add a hidden role field
       const payload: any = {
         username: formData.username.trim(),
         password: formData.password,
         password_confirm: formData.password_confirm,
         email: formData.email || '',
-        role: 'client', // Default to client
+        role: userType, // Use selected role
         first_name: formData.first_name || formData.username,
         last_name: formData.last_name || 'User',
         phone: formData.phone || ''
       };
+
+      // Add professional-specific fields if registering as professional
+      if (userType === 'professional') {
+        payload.professional_profile = {
+          hourly_rate: 0,
+          experience_years: 0,
+          bio: '',
+          languages: ['English'],
+          license_number: '',
+          service_categories: []
+        };
+      }
 
       const response = await fetch('https://dc-backend-6xlc.onrender.com/api/accounts/register/', {
         method: 'POST',
@@ -181,16 +197,18 @@ export default function LoginPage() {
         throw new Error(errorMessage);
       }
 
-      // Auto-login after registration
       if (data.token && data.user) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        setSuccess('Registration successful! Redirecting...');
+        setSuccess(`Registration successful! Welcome as a ${userType}. Redirecting...`);
         
-        // Redirect to homepage for new clients
         setTimeout(() => {
-          window.location.href = '/';
+          if (userType === 'professional') {
+            window.location.href = '/professional/dashboard';
+          } else {
+            window.location.href = '/';
+          }
         }, 1000);
       } else {
         throw new Error('Registration response missing token or user data');
@@ -233,6 +251,54 @@ export default function LoginPage() {
             {success && (
               <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm">
                 <strong>Success:</strong> {success}
+              </div>
+            )}
+
+            {/* User Type Selection (Registration Only) */}
+            {!isLogin && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  I want to register as:
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleUserTypeChange('client')}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      userType === 'client'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                    }`}
+                    disabled={loading}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Users className="h-6 w-6" />
+                      <span className="font-medium">Client</span>
+                      <span className="text-xs text-gray-500 text-center">
+                        Book consultations with experts
+                      </span>
+                    </div>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => handleUserTypeChange('professional')}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      userType === 'professional'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                    }`}
+                    disabled={loading}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <UserCheck className="h-6 w-6" />
+                      <span className="font-medium">Professional</span>
+                      <span className="text-xs text-gray-500 text-center">
+                        Offer consultations and earn money
+                      </span>
+                    </div>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -402,6 +468,16 @@ export default function LoginPage() {
                         />
                       </div>
                     </div>
+
+                    {/* Professional-specific fields (optional) */}
+                    {userType === 'professional' && (
+                      <div className="pt-4 border-t border-gray-200">
+                        <p className="text-sm text-gray-600 mb-3">
+                          <strong>Note:</strong> As a professional, you'll need to complete your profile 
+                          after registration to start receiving consultation requests.
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -434,7 +510,7 @@ export default function LoginPage() {
                   setIsLogin(!isLogin);
                   setError(null);
                   setSuccess(null);
-                  // Reset registration-specific fields when switching to login
+                  setUserType('client'); // Reset to default
                   if (isLogin) {
                     setFormData(prev => ({
                       ...prev,
@@ -442,10 +518,10 @@ export default function LoginPage() {
                       first_name: '',
                       last_name: '',
                       email: '',
-                      phone: ''
+                      phone: '',
+                      role: 'client'
                     }));
                   } else {
-                    // Keep only login fields when switching to registration
                     setFormData(prev => ({
                       username: prev.username,
                       password: prev.password,
@@ -453,7 +529,8 @@ export default function LoginPage() {
                       phone: '',
                       first_name: '',
                       last_name: '',
-                      password_confirm: ''
+                      password_confirm: '',
+                      role: 'client'
                     }));
                   }
                 }}
