@@ -1,7 +1,7 @@
 // src/components/LoginPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, UserCheck, Users } from 'lucide-react';
+import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, UserCheck, Users, Briefcase, MessageSquare } from 'lucide-react';
 
 interface LoginFormData {
   username: string;
@@ -11,7 +11,15 @@ interface LoginFormData {
   phone?: string;
   first_name?: string;
   last_name?: string;
-  role?: 'client' | 'professional'; // Add role field
+  role?: 'client' | 'professional';
+}
+
+interface ProfessionalRegistrationData {
+  hourly_rate?: number;
+  experience_years?: number;
+  bio?: string;
+  languages?: string[];
+  license_number?: string;
 }
 
 export default function LoginPage() {
@@ -19,7 +27,7 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [userType, setUserType] = useState<'client' | 'professional'>('client'); // Default to client
+  const [userType, setUserType] = useState<'client' | 'professional'>('client');
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
     password: '',
@@ -29,6 +37,13 @@ export default function LoginPage() {
     last_name: '',
     password_confirm: '',
     role: 'client'
+  });
+  const [professionalData, setProfessionalData] = useState<ProfessionalRegistrationData>({
+    hourly_rate: 50,
+    experience_years: 1,
+    bio: '',
+    languages: ['English'],
+    license_number: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,12 +81,23 @@ export default function LoginPage() {
     setError(null);
   };
 
+  const handleProfessionalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProfessionalData(prev => ({
+      ...prev,
+      [name]: name === 'hourly_rate' || name === 'experience_years' 
+        ? Number(value) 
+        : value
+    }));
+  };
+
   const handleUserTypeChange = (type: 'client' | 'professional') => {
     setUserType(type);
     setFormData(prev => ({
       ...prev,
       role: type
     }));
+    setError(null);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -143,29 +169,34 @@ export default function LoginPage() {
       return;
     }
 
+    // Validate required fields
+    if (!formData.first_name?.trim()) {
+      setError('First name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.email?.trim()) {
+      setError('Email is required');
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Create the basic user registration payload
       const payload: any = {
         username: formData.username.trim(),
         password: formData.password,
         password_confirm: formData.password_confirm,
-        email: formData.email || '',
-        role: userType, // Use selected role
-        first_name: formData.first_name || formData.username,
-        last_name: formData.last_name || 'User',
-        phone: formData.phone || ''
+        email: formData.email.trim(),
+        role: userType,
+        first_name: formData.first_name.trim(),
+        last_name: (formData.last_name || 'User').trim(),
+        phone: formData.phone?.trim() || '',
+        is_active: true
       };
 
-      // Add professional-specific fields if registering as professional
-      if (userType === 'professional') {
-        payload.professional_profile = {
-          hourly_rate: 0,
-          experience_years: 0,
-          bio: '',
-          languages: ['English'],
-          license_number: '',
-          service_categories: []
-        };
-      }
+      console.log('Registration payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch('https://dc-backend-6xlc.onrender.com/api/accounts/register/', {
         method: 'POST',
@@ -175,7 +206,16 @@ export default function LoginPage() {
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+      
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        throw new Error('Server returned invalid JSON');
+      }
 
       if (!response.ok) {
         let errorMessages: string[] = [];
@@ -183,9 +223,9 @@ export default function LoginPage() {
         if (typeof data === 'object') {
           Object.keys(data).forEach(key => {
             if (Array.isArray(data[key])) {
-              errorMessages.push(...data[key]);
+              errorMessages.push(...data[key].map((msg: string) => `${key}: ${msg}`));
             } else if (typeof data[key] === 'string') {
-              errorMessages.push(data[key]);
+              errorMessages.push(`${key}: ${data[key]}`);
             }
           });
         }
@@ -197,24 +237,39 @@ export default function LoginPage() {
         throw new Error(errorMessage);
       }
 
+      // After successful user registration, auto-login
       if (data.token && data.user) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        setSuccess(`Registration successful! Welcome as a ${userType}. Redirecting...`);
-        
-        setTimeout(() => {
-          if (userType === 'professional') {
+        // If registering as professional, you might need to create professional profile separately
+        if (userType === 'professional') {
+          setSuccess('User account created! Please complete your professional profile after login.');
+          
+          // Redirect to professional dashboard to complete profile
+          setTimeout(() => {
             window.location.href = '/professional/dashboard';
-          } else {
+          }, 1500);
+        } else {
+          setSuccess('Registration successful! Redirecting...');
+          setTimeout(() => {
             window.location.href = '/';
-          }
-        }, 1000);
+          }, 1000);
+        }
       } else {
-        throw new Error('Registration response missing token or user data');
+        // If no auto-login, just show success message
+        setSuccess('Registration successful! Please log in.');
+        setIsLogin(true);
+        // Clear password fields
+        setFormData(prev => ({
+          ...prev,
+          password: '',
+          password_confirm: ''
+        }));
       }
 
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
@@ -236,7 +291,7 @@ export default function LoginPage() {
               DIRECT-CONNECT
             </h1>
             <p className="text-emerald-100 text-center mt-2">
-              {isLogin ? 'Skip the search, Get the Answer' : 'Create your account'}
+              {isLogin ? 'Skip the search, Get the Answer' : 'Join our community'}
             </p>
           </div>
 
@@ -245,12 +300,22 @@ export default function LoginPage() {
             {/* Error/Success Messages */}
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                <strong>Error:</strong> {error}
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5">⚠️</div>
+                  <div>
+                    <strong>Error:</strong> {error}
+                  </div>
+                </div>
               </div>
             )}
             {success && (
               <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm">
-                <strong>Success:</strong> {success}
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5">✅</div>
+                  <div>
+                    <strong>Success:</strong> {success}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -258,24 +323,32 @@ export default function LoginPage() {
             {!isLogin && (
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  I want to register as:
+                  Join as:
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => handleUserTypeChange('client')}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                       userType === 'client'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        ? 'border-emerald-500 bg-emerald-50 shadow-sm'
                         : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
                     }`}
                     disabled={loading}
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <Users className="h-6 w-6" />
-                      <span className="font-medium">Client</span>
+                      <div className={`p-2 rounded-full ${
+                        userType === 'client' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        <Users className="h-5 w-5" />
+                      </div>
+                      <span className={`font-medium ${
+                        userType === 'client' ? 'text-emerald-700' : 'text-gray-700'
+                      }`}>
+                        Client
+                      </span>
                       <span className="text-xs text-gray-500 text-center">
-                        Book consultations with experts
+                        Book consultations
                       </span>
                     </div>
                   </button>
@@ -283,21 +356,46 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleUserTypeChange('professional')}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                       userType === 'professional'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        ? 'border-emerald-500 bg-emerald-50 shadow-sm'
                         : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
                     }`}
                     disabled={loading}
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <UserCheck className="h-6 w-6" />
-                      <span className="font-medium">Professional</span>
+                      <div className={`p-2 rounded-full ${
+                        userType === 'professional' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        <Briefcase className="h-5 w-5" />
+                      </div>
+                      <span className={`font-medium ${
+                        userType === 'professional' ? 'text-emerald-700' : 'text-gray-700'
+                      }`}>
+                        Professional
+                      </span>
                       <span className="text-xs text-gray-500 text-center">
-                        Offer consultations and earn money
+                        Offer services
                       </span>
                     </div>
                   </button>
+                </div>
+                
+                {/* User Type Description */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    {userType === 'client' ? (
+                      <>
+                        <Users className="inline h-4 w-4 mr-1" />
+                        <strong>Clients</strong> can book consultations with verified professionals
+                      </>
+                    ) : (
+                      <>
+                        <Briefcase className="inline h-4 w-4 mr-1" />
+                        <strong>Professionals</strong> offer consultations and earn money
+                      </>
+                    )}
+                  </p>
                 </div>
               </div>
             )}
@@ -316,8 +414,8 @@ export default function LoginPage() {
                       name="username"
                       value={formData.username}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                      placeholder="Enter your username"
+                      className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                      placeholder="john_doe"
                       required
                       autoComplete="username"
                       disabled={loading}
@@ -337,16 +435,17 @@ export default function LoginPage() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                      placeholder="Enter your password"
+                      className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                      placeholder="••••••••"
                       required
+                      minLength={6}
                       autoComplete={isLogin ? "current-password" : "new-password"}
                       disabled={loading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                       disabled={loading}
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -369,16 +468,17 @@ export default function LoginPage() {
                           name="password_confirm"
                           value={formData.password_confirm || ''}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                          placeholder="Confirm your password"
+                          className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                          placeholder="••••••••"
                           required
+                          minLength={6}
                           autoComplete="new-password"
                           disabled={loading}
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                           disabled={loading}
                         >
                           {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -398,8 +498,8 @@ export default function LoginPage() {
                           name="first_name"
                           value={formData.first_name || ''}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                          placeholder="Enter your first name"
+                          className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                          placeholder="John"
                           required
                           autoComplete="given-name"
                           disabled={loading}
@@ -410,7 +510,7 @@ export default function LoginPage() {
                     {/* Last Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Last Name *
+                        Last Name
                       </label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -419,9 +519,8 @@ export default function LoginPage() {
                           name="last_name"
                           value={formData.last_name || ''}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                          placeholder="Enter your last name"
-                          required
+                          className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                          placeholder="Doe"
                           autoComplete="family-name"
                           disabled={loading}
                         />
@@ -440,8 +539,8 @@ export default function LoginPage() {
                           name="email"
                           value={formData.email || ''}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                          placeholder="Enter your email"
+                          className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                          placeholder="john@example.com"
                           required
                           autoComplete="email"
                           disabled={loading}
@@ -461,20 +560,71 @@ export default function LoginPage() {
                           name="phone"
                           value={formData.phone || ''}
                           onChange={handleInputChange}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
-                          placeholder="Enter your phone number"
+                          className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                          placeholder="+1 (555) 123-4567"
                           autoComplete="tel"
                           disabled={loading}
                         />
                       </div>
                     </div>
 
-                    {/* Professional-specific fields (optional) */}
+                    {/* Professional-specific fields */}
                     {userType === 'professional' && (
-                      <div className="pt-4 border-t border-gray-200">
-                        <p className="text-sm text-gray-600 mb-3">
-                          <strong>Note:</strong> As a professional, you'll need to complete your profile 
-                          after registration to start receiving consultation requests.
+                      <div className="pt-6 border-t border-gray-200">
+                        <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                          <Briefcase className="h-4 w-4" />
+                          Professional Information (Optional)
+                        </h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm text-gray-600 mb-1">
+                              Hourly Rate ($)
+                            </label>
+                            <input
+                              type="number"
+                              name="hourly_rate"
+                              value={professionalData.hourly_rate || ''}
+                              onChange={handleProfessionalInputChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              placeholder="50"
+                              min="0"
+                              step="1"
+                              disabled={loading}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-600 mb-1">
+                              Years of Experience
+                            </label>
+                            <input
+                              type="number"
+                              name="experience_years"
+                              value={professionalData.experience_years || ''}
+                              onChange={handleProfessionalInputChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              placeholder="5"
+                              min="0"
+                              step="1"
+                              disabled={loading}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-600 mb-1">
+                              Short Bio
+                            </label>
+                            <textarea
+                              name="bio"
+                              value={professionalData.bio || ''}
+                              onChange={handleProfessionalInputChange}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              placeholder="Tell us about your expertise..."
+                              disabled={loading}
+                            />
+                          </div>
+                        </div>
+                        <p className="mt-3 text-xs text-gray-500">
+                          You can complete your professional profile after registration
                         </p>
                       </div>
                     )}
@@ -485,7 +635,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3.5 mt-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                 >
                   {loading ? (
                     <>
@@ -494,8 +644,17 @@ export default function LoginPage() {
                     </>
                   ) : (
                     <>
-                      <LogIn className="h-5 w-5" />
-                      {isLogin ? 'Sign In' : 'Create Account'}
+                      {isLogin ? (
+                        <>
+                          <LogIn className="h-5 w-5" />
+                          Sign In
+                        </>
+                      ) : (
+                        <>
+                          <MessageSquare className="h-5 w-5" />
+                          {userType === 'professional' ? 'Join as Professional' : 'Join as Client'}
+                        </>
+                      )}
                     </>
                   )}
                 </button>
@@ -503,14 +662,14 @@ export default function LoginPage() {
             </form>
 
             {/* Toggle Login/Register */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <button
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setError(null);
                   setSuccess(null);
-                  setUserType('client'); // Reset to default
+                  setUserType('client');
                   if (isLogin) {
                     setFormData(prev => ({
                       ...prev,
@@ -524,7 +683,7 @@ export default function LoginPage() {
                   } else {
                     setFormData(prev => ({
                       username: prev.username,
-                      password: prev.password,
+                      password: '',
                       email: '',
                       phone: '',
                       first_name: '',
@@ -534,13 +693,20 @@ export default function LoginPage() {
                     }));
                   }
                 }}
-                className="text-emerald-600 hover:text-emerald-700 font-medium text-sm disabled:opacity-50"
+                className="text-emerald-600 hover:text-emerald-700 font-medium text-sm disabled:opacity-50 transition-colors"
                 disabled={loading}
               >
                 {isLogin
                   ? "Don't have an account? Sign up"
                   : 'Already have an account? Sign in'}
               </button>
+              
+              {/* Terms notice */}
+              {!isLogin && (
+                <p className="mt-4 text-xs text-gray-500">
+                  By creating an account, you agree to our Terms of Service and Privacy Policy
+                </p>
+              )}
             </div>
           </div>
         </div>
