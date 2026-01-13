@@ -426,14 +426,17 @@ const AdminDashboard: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-        user: newProfessionalData.user,
-        hourly_rate: newProfessionalData.professional.hourly_rate,
-        experience_years: newProfessionalData.professional.experience_years,
-        bio: newProfessionalData.professional.bio,
-        languages: newProfessionalData.professional.languages,
-        license_number: newProfessionalData.professional.license_number
-      })
-    });
+          user: newProfessionalData.user,
+          professional: {  // ← ADD THIS LINE
+            hourly_rate: newProfessionalData.professional.hourly_rate,
+            experience_years: newProfessionalData.professional.experience_years,
+            bio: newProfessionalData.professional.bio,
+            languages: newProfessionalData.professional.languages,
+            license_number: newProfessionalData.professional.license_number,
+            service_categories: []  // Added comma here
+            }  // ← ADD THIS LINE
+          })
+      });
       
       if (response.ok) {
         setSuccessMessage('Professional added successfully');
