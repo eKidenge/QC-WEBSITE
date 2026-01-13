@@ -428,7 +428,8 @@ const AdminDashboard: React.FC = () => {
         body: JSON.stringify({
           user: {
             ...newProfessionalData.user,
-            role: 'professional'
+            role: 'professional',
+            user_type: 'professional'  // ← ADD THIS TOO
           },  // ← ADD THIS COMMA AND CLOSING BRACE
           professional: {  // ← ADD THIS LINE
             hourly_rate: newProfessionalData.professional.hourly_rate,
