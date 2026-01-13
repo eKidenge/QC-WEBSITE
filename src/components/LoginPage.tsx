@@ -93,6 +93,8 @@ export default function LoginPage() {
         },
       });
 
+      console.log('CATEGORIES RESPONSE:', response.status, await response.text()); // <-- ADD THIS LINE
+
       if (!response.ok) {
         console.error('Failed to fetch categories:', response.status);
         setCategories([]);
