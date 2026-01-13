@@ -15,11 +15,12 @@ interface LoginFormData {
 }
 
 interface ProfessionalRegistrationData {
-  hourly_rate?: number;
-  experience_years?: number;
-  bio?: string;
-  languages?: string[];
+  specialty: string;
   license_number?: string;
+  hourly_rate: number;
+  experience_years: number;
+  bio?: string;
+  languages: string[];
 }
 
 export default function LoginPage() {
@@ -39,11 +40,12 @@ export default function LoginPage() {
     role: 'client'
   });
   const [professionalData, setProfessionalData] = useState<ProfessionalRegistrationData>({
+    specialty: 'General',
+    license_number: '',
     hourly_rate: 50,
     experience_years: 1,
     bio: '',
-    languages: ['English'],
-    license_number: ''
+    languages: ['English']
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,12 +83,14 @@ export default function LoginPage() {
     setError(null);
   };
 
-  const handleProfessionalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleProfessionalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfessionalData(prev => ({
       ...prev,
       [name]: name === 'hourly_rate' || name === 'experience_years' 
         ? Number(value) 
+        : name === 'languages'
+        ? [value]
         : value
     }));
   };
@@ -182,8 +186,15 @@ export default function LoginPage() {
       return;
     }
 
+    // Validate professional fields
+    if (userType === 'professional' && !professionalData.specialty?.trim()) {
+      setError('Specialty is required for professionals');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Create the basic user registration payload
+      // Create the registration payload
       const payload: any = {
         username: formData.username.trim(),
         password: formData.password,
@@ -196,7 +207,21 @@ export default function LoginPage() {
         is_active: true
       };
 
-      console.log('Registration payload:', JSON.stringify(payload, null, 2));
+      // Add professional-specific data if registering as professional
+      if (userType === 'professional') {
+        payload.professional_profile = {
+          specialty: professionalData.specialty.trim() || 'General',
+          license_number: professionalData.license_number?.trim() || '',
+          hourly_rate: professionalData.hourly_rate || 50,
+          experience_years: professionalData.experience_years || 1,
+          bio: professionalData.bio?.trim() || '',
+          languages: professionalData.languages || ['English'],
+          is_verified: false,
+          is_online: false
+        };
+      }
+
+      console.log('Sending registration payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch('https://dc-backend-6xlc.onrender.com/api/accounts/register/', {
         method: 'POST',
@@ -226,6 +251,13 @@ export default function LoginPage() {
               errorMessages.push(...data[key].map((msg: string) => `${key}: ${msg}`));
             } else if (typeof data[key] === 'string') {
               errorMessages.push(`${key}: ${data[key]}`);
+            } else if (typeof data[key] === 'object') {
+              // Handle nested objects (like professional_profile errors)
+              Object.keys(data[key] || {}).forEach(subKey => {
+                if (Array.isArray(data[key][subKey])) {
+                  errorMessages.push(...data[key][subKey].map((msg: string) => `${key}.${subKey}: ${msg}`));
+                }
+              });
             }
           });
         }
@@ -242,20 +274,16 @@ export default function LoginPage() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        // If registering as professional, you might need to create professional profile separately
-        if (userType === 'professional') {
-          setSuccess('User account created! Please complete your professional profile after login.');
-          
-          // Redirect to professional dashboard to complete profile
-          setTimeout(() => {
+        setSuccess(`Registration successful! Welcome as a ${userType}. Redirecting...`);
+        
+        // Redirect based on role
+        setTimeout(() => {
+          if (userType === 'professional') {
             window.location.href = '/professional/dashboard';
-          }, 1500);
-        } else {
-          setSuccess('Registration successful! Redirecting...');
-          setTimeout(() => {
+          } else {
             window.location.href = '/';
-          }, 1000);
-        }
+          }
+        }, 1500);
       } else {
         // If no auto-login, just show success message
         setSuccess('Registration successful! Please log in.');
@@ -573,59 +601,118 @@ export default function LoginPage() {
                       <div className="pt-6 border-t border-gray-200">
                         <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
                           <Briefcase className="h-4 w-4" />
-                          Professional Information (Optional)
+                          Professional Information
                         </h3>
                         <div className="space-y-4">
+                          {/* Specialty - REQUIRED */}
                           <div>
-                            <label className="block text-sm text-gray-600 mb-1">
-                              Hourly Rate ($)
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Specialty *
                             </label>
                             <input
-                              type="number"
-                              name="hourly_rate"
-                              value={professionalData.hourly_rate || ''}
+                              type="text"
+                              name="specialty"
+                              value={professionalData.specialty}
                               onChange={handleProfessionalInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                              placeholder="50"
-                              min="0"
-                              step="1"
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              placeholder="e.g., Lawyer, Doctor, Consultant"
+                              required
                               disabled={loading}
                             />
                           </div>
+
+                          {/* License Number */}
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
-                              Years of Experience
+                              License Number (Optional)
                             </label>
                             <input
-                              type="number"
-                              name="experience_years"
-                              value={professionalData.experience_years || ''}
+                              type="text"
+                              name="license_number"
+                              value={professionalData.license_number || ''}
                               onChange={handleProfessionalInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                              placeholder="5"
-                              min="0"
-                              step="1"
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              placeholder="Professional license number"
                               disabled={loading}
                             />
                           </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            {/* Hourly Rate */}
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-1">
+                                Hourly Rate ($)
+                              </label>
+                              <input
+                                type="number"
+                                name="hourly_rate"
+                                value={professionalData.hourly_rate}
+                                onChange={handleProfessionalInputChange}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                                placeholder="50"
+                                min="0"
+                                step="1"
+                                disabled={loading}
+                              />
+                            </div>
+                            
+                            {/* Experience Years */}
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-1">
+                                Years of Experience
+                              </label>
+                              <input
+                                type="number"
+                                name="experience_years"
+                                value={professionalData.experience_years}
+                                onChange={handleProfessionalInputChange}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                                placeholder="5"
+                                min="0"
+                                step="1"
+                                disabled={loading}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Languages */}
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
-                              Short Bio
+                              Languages (Optional)
+                            </label>
+                            <select
+                              name="languages"
+                              value={professionalData.languages[0] || 'English'}
+                              onChange={handleProfessionalInputChange}
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              disabled={loading}
+                            >
+                              <option value="English">English</option>
+                              <option value="Spanish">Spanish</option>
+                              <option value="French">French</option>
+                              <option value="German">German</option>
+                              <option value="Chinese">Chinese</option>
+                              <option value="Arabic">Arabic</option>
+                              <option value="Swahili">Swahili</option>
+                            </select>
+                          </div>
+
+                          {/* Bio */}
+                          <div>
+                            <label className="block text-sm text-gray-600 mb-1">
+                              Bio (Optional)
                             </label>
                             <textarea
                               name="bio"
                               value={professionalData.bio || ''}
                               onChange={handleProfessionalInputChange}
                               rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                              placeholder="Tell us about your expertise..."
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
+                              placeholder="Tell us about your expertise, qualifications, and experience..."
                               disabled={loading}
                             />
                           </div>
                         </div>
-                        <p className="mt-3 text-xs text-gray-500">
-                          You can complete your professional profile after registration
-                        </p>
                       </div>
                     )}
                   </>
@@ -680,6 +767,14 @@ export default function LoginPage() {
                       phone: '',
                       role: 'client'
                     }));
+                    setProfessionalData({
+                      specialty: 'General',
+                      license_number: '',
+                      hourly_rate: 50,
+                      experience_years: 1,
+                      bio: '',
+                      languages: ['English']
+                    });
                   } else {
                     setFormData(prev => ({
                       username: prev.username,
