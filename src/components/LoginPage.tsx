@@ -22,10 +22,12 @@ interface ServiceCategory {
   base_price: string;
   commission_rate: string;
   available_24_7: boolean;
+  active?: boolean;
+  order?: number;
 }
 
 interface ProfessionalRegistrationData {
-  service_categories: number[]; // Array of category IDs
+  service_categories: number[];
   license_number?: string;
   hourly_rate: number;
   experience_years: number;
@@ -83,84 +85,47 @@ export default function LoginPage() {
     try {
       setLoadingCategories(true);
       
-      // Try different possible endpoints for categories
-      const endpoints = [
-        'https://dc-backend-6xlc.onrender.com/api/categories/', // Most likely
-        'https://dc-backend-6xlc.onrender.com/api/service-categories/',
-        'https://dc-backend-6xlc.onrender.com/api/categories/service-categories/',
-        'https://dc-backend-6xlc.onrender.com/api/categories/all/'
-      ];
+      // Your categories endpoint
+      const response = await fetch('https://dc-backend-6xlc.onrender.com/api/categories/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Failed to fetch categories:', response.status);
+        setCategories([]);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Categories response:', data);
       
       let categoriesData: ServiceCategory[] = [];
-      let foundEndpoint = '';
       
-      // Try each endpoint until one works
-      for (const endpoint of endpoints) {
-        try {
-          console.log('Trying categories endpoint:', endpoint);
-          const response = await fetch(endpoint, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Categories response from', endpoint, ':', data);
-            foundEndpoint = endpoint;
-            
-            // Handle different response formats
-            if (Array.isArray(data)) {
-              categoriesData = data;
-            } else if (data.results && Array.isArray(data.results)) {
-              categoriesData = data.results;
-            } else if (data.data && Array.isArray(data.data)) {
-              categoriesData = data.data;
-            } else if (data.categories && Array.isArray(data.categories)) {
-              categoriesData = data.categories;
-            } else {
-              // Try to find any array in the response
-              for (const key in data) {
-                if (Array.isArray(data[key])) {
-                  categoriesData = data[key];
-                  break;
-                }
-              }
-            }
-            
-            if (categoriesData.length > 0) {
-              break; // Stop trying endpoints when we get data
-            }
-          }
-        } catch (err) {
-          console.log('Endpoint failed:', endpoint, err);
-        }
+      // Handle your API response format
+      if (Array.isArray(data)) {
+        categoriesData = data;
+      } else if (data.results && Array.isArray(data.results)) {
+        categoriesData = data.results;
+      } else if (data.categories && Array.isArray(data.categories)) {
+        categoriesData = data.categories;
       }
       
-      if (categoriesData.length === 0) {
-        // If no endpoint worked, show hardcoded categories as fallback
-        console.log('No categories found from API, using fallback');
-        categoriesData = [
-          { id: 1, name: 'Legal Advice', description: 'Legal consultation services', icon: 'gavel', base_price: '100.00', commission_rate: '20.00', available_24_7: false },
-          { id: 2, name: 'Medical Consultation', description: 'Healthcare advice', icon: 'stethoscope', base_price: '80.00', commission_rate: '15.00', available_24_7: true },
-          { id: 3, name: 'Business Consulting', description: 'Business strategy and advice', icon: 'briefcase', base_price: '120.00', commission_rate: '25.00', available_24_7: false },
-          { id: 4, name: 'Tech Support', description: 'Technology and IT services', icon: 'laptop', base_price: '60.00', commission_rate: '10.00', available_24_7: true },
-          { id: 5, name: 'Financial Planning', description: 'Investment and finance advice', icon: 'dollar-sign', base_price: '150.00', commission_rate: '30.00', available_24_7: false },
-        ];
+      // Filter only active categories
+      categoriesData = categoriesData.filter(cat => cat.active !== false);
+      
+      // Sort by order field if it exists
+      if (categoriesData.every(cat => cat.order !== undefined)) {
+        categoriesData.sort((a, b) => (a.order || 0) - (b.order || 0));
       }
       
       setCategories(categoriesData);
-      console.log('Final categories loaded:', categoriesData.length, 'items');
       
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Fallback categories
-      setCategories([
-        { id: 1, name: 'Legal Advice', description: 'Legal consultation services', icon: 'gavel', base_price: '100.00', commission_rate: '20.00', available_24_7: false },
-        { id: 2, name: 'Medical Consultation', description: 'Healthcare advice', icon: 'stethoscope', base_price: '80.00', commission_rate: '15.00', available_24_7: true },
-        { id: 3, name: 'Business Consulting', description: 'Business strategy and advice', icon: 'briefcase', base_price: '120.00', commission_rate: '25.00', available_24_7: false },
-      ]);
+      setCategories([]);
     } finally {
       setLoadingCategories(false);
     }
@@ -203,13 +168,11 @@ export default function LoginPage() {
     setProfessionalData(prev => {
       const currentCategories = [...prev.service_categories];
       if (currentCategories.includes(categoryId)) {
-        // Remove category if already selected
         return {
           ...prev,
           service_categories: currentCategories.filter(id => id !== categoryId)
         };
       } else {
-        // Add category if not selected
         return {
           ...prev,
           service_categories: [...currentCategories, categoryId]
@@ -289,14 +252,12 @@ export default function LoginPage() {
     setError(null);
     setSuccess(null);
 
-    // Check if passwords match
     if (formData.password !== formData.password_confirm) {
       setError('Passwords do not match');
       setLoading(false);
       return;
     }
 
-    // Validate required fields
     if (!formData.first_name?.trim()) {
       setError('First name is required');
       setLoading(false);
@@ -309,7 +270,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Validate professional fields - require at least one category
     if (userType === 'professional' && professionalData.service_categories.length === 0) {
       setError('Please select at least one service category');
       setLoading(false);
@@ -317,7 +277,6 @@ export default function LoginPage() {
     }
 
     try {
-      // Create the registration payload
       const payload: any = {
         username: formData.username.trim(),
         password: formData.password,
@@ -330,9 +289,7 @@ export default function LoginPage() {
         is_active: true
       };
 
-      // Add professional-specific fields
       if (userType === 'professional') {
-        // Use the first selected category as specialty (for backend compatibility)
         if (professionalData.service_categories.length > 0) {
           const firstCategory = categories.find(cat => cat.id === professionalData.service_categories[0]);
           payload.specialty = firstCategory?.name || 'General';
@@ -343,9 +300,6 @@ export default function LoginPage() {
         payload.bio = professionalData.bio?.trim() || '';
         payload.languages = professionalData.languages || ['English'];
         payload.license_number = professionalData.license_number?.trim() || '';
-        
-        // Store categories for future use (if backend supports it later)
-        // payload.service_categories = professionalData.service_categories;
       }
 
       console.log('Sending registration payload:', JSON.stringify(payload, null, 2));
@@ -389,14 +343,12 @@ export default function LoginPage() {
         throw new Error(errorMessage);
       }
 
-      // After successful user registration, auto-login
       if (data.token && data.user) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
         setSuccess(`Registration successful! Welcome as a ${userType}. Redirecting...`);
         
-        // Redirect based on role
         setTimeout(() => {
           if (userType === 'professional') {
             window.location.href = '/professional/dashboard';
@@ -405,10 +357,8 @@ export default function LoginPage() {
           }
         }, 1500);
       } else {
-        // If no auto-login, just show success message
         setSuccess('Registration successful! Please log in.');
         setIsLogin(true);
-        // Clear password fields
         setFormData(prev => ({
           ...prev,
           password: '',
@@ -430,7 +380,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* Header */}
           <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-8 text-white">
             <div className="flex items-center justify-center mb-4">
               <Lock className="h-12 w-12" />
@@ -443,9 +392,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Form */}
           <div className="p-8">
-            {/* Error/Success Messages */}
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
                 <div className="flex items-start gap-2">
@@ -467,7 +414,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* User Type Selection (Registration Only) */}
             {!isLogin && (
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -529,7 +475,6 @@ export default function LoginPage() {
                   </button>
                 </div>
                 
-                {/* User Type Description */}
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">
                     {userType === 'client' ? (
@@ -550,7 +495,6 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
-                {/* Username */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Username *
@@ -571,7 +515,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Password *
@@ -601,10 +544,8 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Registration Only Fields */}
                 {!isLogin && (
                   <>
-                    {/* Password Confirmation */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Confirm Password *
@@ -634,7 +575,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* First Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         First Name *
@@ -655,7 +595,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* Last Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Last Name
@@ -675,7 +614,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* Email */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Email Address *
@@ -696,7 +634,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* Phone */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Phone Number (Optional)
@@ -716,7 +653,6 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    {/* Professional-specific fields */}
                     {userType === 'professional' && (
                       <div className="pt-6 border-t border-gray-200">
                         <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
@@ -724,7 +660,6 @@ export default function LoginPage() {
                           Professional Information
                         </h3>
                         <div className="space-y-4">
-                          {/* Service Categories - REQUIRED */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Service Categories *
@@ -733,19 +668,9 @@ export default function LoginPage() {
                               </span>
                             </label>
                             {loadingCategories ? (
-                              <div className="text-sm text-gray-500 py-2">Loading categories...</div>
+                              <div className="text-sm text-gray-500 py-2">Loading categories from database...</div>
                             ) : categories.length === 0 ? (
-                              <div className="text-sm text-gray-500 py-2">
-                                <p className="mb-2">No categories available from server.</p>
-                                <p className="text-xs">Please select your specialty manually:</p>
-                                <input
-                                  type="text"
-                                  placeholder="e.g., Lawyer, Doctor, Consultant"
-                                  className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg"
-                                  value={professionalData.license_number} // Using license_number as temporary field
-                                  onChange={(e) => setProfessionalData(prev => ({...prev, license_number: e.target.value}))}
-                                />
-                              </div>
+                              <div className="text-sm text-gray-500 py-2">No service categories available in database</div>
                             ) : (
                               <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                                 {categories.map(category => (
@@ -791,7 +716,6 @@ export default function LoginPage() {
                             )}
                           </div>
 
-                          {/* License Number */}
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
                               License Number (Optional)
@@ -808,7 +732,6 @@ export default function LoginPage() {
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
-                            {/* Hourly Rate */}
                             <div>
                               <label className="block text-sm text-gray-600 mb-1">
                                 Hourly Rate ($)
@@ -826,7 +749,6 @@ export default function LoginPage() {
                               />
                             </div>
                             
-                            {/* Experience Years */}
                             <div>
                               <label className="block text-sm text-gray-600 mb-1">
                                 Years of Experience
@@ -845,7 +767,6 @@ export default function LoginPage() {
                             </div>
                           </div>
 
-                          {/* Languages */}
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
                               Languages (Optional)
@@ -867,7 +788,6 @@ export default function LoginPage() {
                             </select>
                           </div>
 
-                          {/* Bio */}
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
                               Bio (Optional)
@@ -888,7 +808,6 @@ export default function LoginPage() {
                   </>
                 )}
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -918,7 +837,6 @@ export default function LoginPage() {
               </div>
             </form>
 
-            {/* Toggle Login/Register */}
             <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <button
                 type="button"
@@ -966,7 +884,6 @@ export default function LoginPage() {
                   : 'Already have an account? Sign in'}
               </button>
               
-              {/* Terms notice */}
               {!isLogin && (
                 <p className="mt-4 text-xs text-gray-500">
                   By creating an account, you agree to our Terms of Service and Privacy Policy
