@@ -523,7 +523,7 @@ export default function LoginPage() {
                       value={formData.username}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                      placeholder="john_doe"
+                      placeholder="sammy"
                       required
                       autoComplete="username"
                       disabled={loading}
@@ -603,7 +603,7 @@ export default function LoginPage() {
                           value={formData.first_name || ''}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                          placeholder="John"
+                          placeholder="Orengo"
                           required
                           autoComplete="given-name"
                           disabled={loading}
@@ -623,7 +623,7 @@ export default function LoginPage() {
                           value={formData.last_name || ''}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                          placeholder="Doe"
+                          placeholder="JAMES"
                           autoComplete="family-name"
                           disabled={loading}
                         />
@@ -642,7 +642,7 @@ export default function LoginPage() {
                           value={formData.email || ''}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                          placeholder="john@example.com"
+                          placeholder="jim@example.com"
                           required
                           autoComplete="email"
                           disabled={loading}
@@ -662,7 +662,7 @@ export default function LoginPage() {
                           value={formData.phone || ''}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                          placeholder="+1 (555) 123-4567"
+                          placeholder="+254 757 133 220"
                           autoComplete="tel"
                           disabled={loading}
                         />
