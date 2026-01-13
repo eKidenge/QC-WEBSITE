@@ -462,6 +462,7 @@ const AdminDashboard: React.FC = () => {
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         const errorData = await response.json();
+        console.log('Django validation errors:', errorData); // ← ADD THIS LINE
         setError(`Failed to add professional: ${JSON.stringify(errorData)}`);
       }
     } catch (error) {
