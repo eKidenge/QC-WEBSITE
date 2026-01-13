@@ -1,7 +1,7 @@
 // src/components/LoginPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, UserCheck, Users, Briefcase, MessageSquare } from 'lucide-react';
+import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, UserCheck, Users, Briefcase, MessageSquare, Tag } from 'lucide-react';
 
 interface LoginFormData {
   username: string;
@@ -14,8 +14,18 @@ interface LoginFormData {
   role?: 'client' | 'professional';
 }
 
+interface ServiceCategory {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  base_price: string;
+  commission_rate: string;
+  available_24_7: boolean;
+}
+
 interface ProfessionalRegistrationData {
-  specialty: string;
+  service_categories: number[]; // Array of category IDs
   license_number?: string;
   hourly_rate: number;
   experience_years: number;
@@ -40,16 +50,23 @@ export default function LoginPage() {
     role: 'client'
   });
   const [professionalData, setProfessionalData] = useState<ProfessionalRegistrationData>({
-    specialty: 'General',
+    service_categories: [], // Start with empty array
     license_number: '',
     hourly_rate: 50,
     experience_years: 1,
     bio: '',
     languages: ['English']
   });
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Fetch service categories on component mount
+  useEffect(() => {
+    fetchServiceCategories();
+  }, []);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -61,6 +78,29 @@ export default function LoginPage() {
       redirectBasedOnRole(userData);
     }
   }, [navigate]);
+
+  const fetchServiceCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const response = await fetch('https://dc-backend-6xlc.onrender.com/api/accounts/categories/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      } else {
+        console.error('Failed to fetch categories');
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   const redirectBasedOnRole = (userData: any) => {
     const userType = userData.user_type || userData.role || 'client';
@@ -93,6 +133,25 @@ export default function LoginPage() {
         ? [value]
         : value
     }));
+  };
+
+  const handleCategoryChange = (categoryId: number) => {
+    setProfessionalData(prev => {
+      const currentCategories = [...prev.service_categories];
+      if (currentCategories.includes(categoryId)) {
+        // Remove category if already selected
+        return {
+          ...prev,
+          service_categories: currentCategories.filter(id => id !== categoryId)
+        };
+      } else {
+        // Add category if not selected
+        return {
+          ...prev,
+          service_categories: [...currentCategories, categoryId]
+        };
+      }
+    });
   };
 
   const handleUserTypeChange = (type: 'client' | 'professional') => {
@@ -186,9 +245,9 @@ export default function LoginPage() {
       return;
     }
 
-    // Validate professional fields
-    if (userType === 'professional' && !professionalData.specialty?.trim()) {
-      setError('Specialty is required for professionals');
+    // Validate professional fields - require at least one category
+    if (userType === 'professional' && professionalData.service_categories.length === 0) {
+      setError('Please select at least one service category');
       setLoading(false);
       return;
     }
@@ -207,18 +266,23 @@ export default function LoginPage() {
         is_active: true
       };
 
-      // Add professional-specific data if registering as professional
+      // Add professional-specific fields
       if (userType === 'professional') {
-        payload.professional_profile = {
-          specialty: professionalData.specialty.trim() || 'General',
-          license_number: professionalData.license_number?.trim() || '',
-          hourly_rate: professionalData.hourly_rate || 50,
-          experience_years: professionalData.experience_years || 1,
-          bio: professionalData.bio?.trim() || '',
-          languages: professionalData.languages || ['English'],
-          is_verified: false,
-          is_online: false
-        };
+        // For now, we'll use the first selected category as specialty
+        // You might need to update your backend to handle multiple categories
+        if (professionalData.service_categories.length > 0) {
+          const firstCategory = categories.find(cat => cat.id === professionalData.service_categories[0]);
+          payload.specialty = firstCategory?.name || 'General';
+        }
+        
+        payload.hourly_rate = professionalData.hourly_rate || 50;
+        payload.experience_years = professionalData.experience_years || 1;
+        payload.bio = professionalData.bio?.trim() || '';
+        payload.languages = professionalData.languages || ['English'];
+        payload.license_number = professionalData.license_number?.trim() || '';
+        
+        // You might want to send service_categories separately if your backend supports it
+        // payload.service_categories = professionalData.service_categories;
       }
 
       console.log('Sending registration payload:', JSON.stringify(payload, null, 2));
@@ -251,13 +315,6 @@ export default function LoginPage() {
               errorMessages.push(...data[key].map((msg: string) => `${key}: ${msg}`));
             } else if (typeof data[key] === 'string') {
               errorMessages.push(`${key}: ${data[key]}`);
-            } else if (typeof data[key] === 'object') {
-              // Handle nested objects (like professional_profile errors)
-              Object.keys(data[key] || {}).forEach(subKey => {
-                if (Array.isArray(data[key][subKey])) {
-                  errorMessages.push(...data[key][subKey].map((msg: string) => `${key}.${subKey}: ${msg}`));
-                }
-              });
             }
           });
         }
@@ -600,25 +657,52 @@ export default function LoginPage() {
                     {userType === 'professional' && (
                       <div className="pt-6 border-t border-gray-200">
                         <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
-                          <Briefcase className="h-4 w-4" />
+                          <Tag className="h-4 w-4" />
                           Professional Information
                         </h3>
                         <div className="space-y-4">
-                          {/* Specialty - REQUIRED */}
+                          {/* Service Categories - REQUIRED */}
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Specialty *
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Service Categories *
+                              <span className="text-xs text-gray-500 ml-1">
+                                (Select at least one)
+                              </span>
                             </label>
-                            <input
-                              type="text"
-                              name="specialty"
-                              value={professionalData.specialty}
-                              onChange={handleProfessionalInputChange}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition disabled:bg-gray-50"
-                              placeholder="e.g., Lawyer, Doctor, Consultant"
-                              required
-                              disabled={loading}
-                            />
+                            {loadingCategories ? (
+                              <div className="text-sm text-gray-500">Loading categories...</div>
+                            ) : categories.length === 0 ? (
+                              <div className="text-sm text-gray-500">No categories available</div>
+                            ) : (
+                              <div className="space-y-2">
+                                {categories.map(category => (
+                                  <div key={category.id} className="flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      id={`category-${category.id}`}
+                                      checked={professionalData.service_categories.includes(category.id)}
+                                      onChange={() => handleCategoryChange(category.id)}
+                                      className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                      disabled={loading}
+                                    />
+                                    <label
+                                      htmlFor={`category-${category.id}`}
+                                      className="ml-2 text-sm text-gray-700 flex items-center gap-2"
+                                    >
+                                      <span className="font-medium">{category.name}</span>
+                                      <span className="text-xs text-gray-500">
+                                        - {category.description}
+                                      </span>
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {professionalData.service_categories.length > 0 && (
+                              <div className="mt-2 text-xs text-gray-500">
+                                Selected: {professionalData.service_categories.length} category(ies)
+                              </div>
+                            )}
                           </div>
 
                           {/* License Number */}
@@ -768,7 +852,7 @@ export default function LoginPage() {
                       role: 'client'
                     }));
                     setProfessionalData({
-                      specialty: 'General',
+                      service_categories: [],
                       license_number: '',
                       hourly_rate: 50,
                       experience_years: 1,
