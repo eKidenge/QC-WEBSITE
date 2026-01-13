@@ -636,7 +636,7 @@ export default function LoginPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone Number (Optional)
+                        Phone Number
                       </label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -718,7 +718,7 @@ export default function LoginPage() {
 
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
-                              License Number (Optional)
+                              License Number
                             </label>
                             <input
                               type="text"
@@ -769,7 +769,7 @@ export default function LoginPage() {
 
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
-                              Languages (Optional)
+                              Languages 
                             </label>
                             <select
                               name="languages"
@@ -790,7 +790,7 @@ export default function LoginPage() {
 
                           <div>
                             <label className="block text-sm text-gray-600 mb-1">
-                              Bio (Optional)
+                              Bio 
                             </label>
                             <textarea
                               name="bio"
