@@ -86,7 +86,7 @@ export default function LoginPage() {
       setLoadingCategories(true);
       
       // Your categories endpoint
-      const response = await fetch('https://dc-backend-6xlc.onrender.com/api/categories/', {
+      const response = await fetch('https://dc-backend-6xlc.onrender.com/api/categories/categories/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
