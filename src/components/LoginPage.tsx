@@ -1,7 +1,7 @@
 // src/components/LoginPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, UserCheck, Users, Briefcase, MessageSquare, Tag } from 'lucide-react';
+import { Lock, User, Mail, Phone, LogIn, Eye, EyeOff, Users, Briefcase, MessageSquare, Tag, ChevronDown } from 'lucide-react';
 
 interface LoginFormData {
   username: string;
@@ -64,6 +64,7 @@ export default function LoginPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   // Fetch service categories on component mount
   useEffect(() => {
@@ -376,6 +377,21 @@ export default function LoginPage() {
 
   const handleSubmit = isLogin ? handleLogin : handleRegister;
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (categoriesOpen && !target.closest('.categories-dropdown')) {
+        setCategoriesOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [categoriesOpen]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -660,7 +676,7 @@ export default function LoginPage() {
                           Professional Information
                         </h3>
                         <div className="space-y-4">
-                          <div>
+                          <div className="categories-dropdown">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Service Categories *
                               <span className="text-xs text-gray-500 ml-1">
@@ -668,52 +684,134 @@ export default function LoginPage() {
                               </span>
                             </label>
                             {loadingCategories ? (
-                              <div className="text-sm text-gray-500 py-2">Loading categories from database...</div>
+                              <div className="text-sm text-gray-500 py-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-4 w-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                                  Loading categories from database...
+                                </div>
+                              </div>
                             ) : categories.length === 0 ? (
-                              <div className="text-sm text-gray-500 py-2">No service categories available in database</div>
+                              <div className="text-sm text-gray-500 py-2">
+                                ⚠️ No service categories available in database
+                              </div>
                             ) : (
-                              <div className="space-y-2 max-h-48 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                                {categories.map(category => (
-                                  <div key={category.id} className="flex items-center">
-                                    <input
-                                      type="checkbox"
-                                      id={`category-${category.id}`}
-                                      checked={professionalData.service_categories.includes(category.id)}
-                                      onChange={() => handleCategoryChange(category.id)}
-                                      className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                                      disabled={loading}
-                                    />
-                                    <label
-                                      htmlFor={`category-${category.id}`}
-                                      className="ml-2 text-sm text-gray-700 flex items-start gap-2 cursor-pointer flex-1"
-                                    >
-                                      <div className="flex-1">
-                                        <div className="font-medium">{category.name}</div>
-                                        <div className="text-xs text-gray-500">{category.description}</div>
-                                        <div className="flex gap-2 mt-1">
-                                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                                            Base: ${category.base_price}
-                                          </span>
-                                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                                            Commission: {category.commission_rate}%
-                                          </span>
-                                          {category.available_24_7 && (
-                                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                                              24/7
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </label>
+                              <div className="relative">
+                                {/* Dropdown toggle button */}
+                                <button
+                                  type="button"
+                                  onClick={() => setCategoriesOpen(!categoriesOpen)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex items-center justify-between hover:border-emerald-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                                  disabled={loading}
+                                >
+                                  <div>
+                                    <span className="text-gray-700">
+                                      {professionalData.service_categories.length === 0
+                                        ? "Select service categories"
+                                        : `${professionalData.service_categories.length} category(ies) selected`}
+                                    </span>
                                   </div>
-                                ))}
+                                  <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                
+                                {/* Selected categories preview */}
+                                {professionalData.service_categories.length > 0 && (
+                                  <div className="mt-2">
+                                    <div className="text-xs text-gray-500 mb-1">Selected:</div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {professionalData.service_categories.map(catId => {
+                                        const category = categories.find(c => c.id === catId);
+                                        return category ? (
+                                          <span
+                                            key={catId}
+                                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium"
+                                          >
+                                            {category.name}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleCategoryChange(catId)}
+                                              className="text-emerald-600 hover:text-emerald-800 ml-0.5"
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        ) : null;
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Dropdown content */}
+                                {categoriesOpen && (
+                                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                                    <div className="p-2 space-y-1">
+                                      {categories.map(category => (
+                                        <div
+                                          key={category.id}
+                                          className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                                            professionalData.service_categories.includes(category.id)
+                                              ? 'bg-emerald-50 border border-emerald-200'
+                                              : 'hover:bg-gray-50'
+                                          }`}
+                                          onClick={() => handleCategoryChange(category.id)}
+                                        >
+                                          <div className="flex items-start gap-2">
+                                            <div className="mt-0.5">
+                                              <input
+                                                type="checkbox"
+                                                id={`category-${category.id}`}
+                                                checked={professionalData.service_categories.includes(category.id)}
+                                                onChange={() => {}}
+                                                className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                              />
+                                            </div>
+                                            <div className="flex-1">
+                                              <div className="flex items-start justify-between">
+                                                <label
+                                                  htmlFor={`category-${category.id}`}
+                                                  className="font-medium text-gray-800 text-sm cursor-pointer"
+                                                >
+                                                  {category.name}
+                                                </label>
+                                                <div className="flex items-center gap-1 text-xs">
+                                                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded">
+                                                    KES {parseFloat(category.base_price).toLocaleString()}
+                                                  </span>
+                                                  {category.available_24_7 && (
+                                                    <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded">
+                                                      24/7
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <p className="text-xs text-gray-500 mt-1">{category.description}</p>
+                                              <div className="mt-1 text-xs text-gray-400">
+                                                Commission: {category.commission_rate}%
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    {/* Close button for mobile */}
+                                    <div className="border-t border-gray-200 p-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setCategoriesOpen(false)}
+                                        className="w-full py-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                                      >
+                                        Close
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
-                            {professionalData.service_categories.length > 0 && (
-                              <div className="mt-2 text-xs text-gray-500">
-                                Selected: {professionalData.service_categories.length} category(ies)
-                              </div>
-                            )}
+                            
+                            {/* Helper text */}
+                            <div className="mt-2 text-xs text-gray-500">
+                              Tip: Select the categories you specialize in. Clients will find you based on these.
+                            </div>
                           </div>
 
                           <div>
@@ -734,7 +832,7 @@ export default function LoginPage() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm text-gray-600 mb-1">
-                                Hourly Rate ($)
+                                Hourly Rate (KES)
                               </label>
                               <input
                                 type="number"
@@ -779,12 +877,12 @@ export default function LoginPage() {
                               disabled={loading}
                             >
                               <option value="English">English</option>
+                              <option value="Swahili">Swahili</option>
                               <option value="Spanish">Spanish</option>
                               <option value="French">French</option>
                               <option value="German">German</option>
                               <option value="Chinese">Chinese</option>
                               <option value="Arabic">Arabic</option>
-                              <option value="Swahili">Swahili</option>
                             </select>
                           </div>
 
@@ -845,6 +943,7 @@ export default function LoginPage() {
                   setError(null);
                   setSuccess(null);
                   setUserType('client');
+                  setCategoriesOpen(false);
                   if (isLogin) {
                     setFormData(prev => ({
                       ...prev,
