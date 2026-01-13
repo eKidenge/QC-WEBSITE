@@ -510,7 +510,14 @@ const AdminDashboard: React.FC = () => {
           'Authorization': `Token ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(newClientData)
+        body: JSON.stringify({
+          user: {
+            ...newClientData.user,
+            role: 'client',
+            user_type: 'client'
+          },
+          client: newClientData.client
+        })
       });
       
       if (response.ok) {
