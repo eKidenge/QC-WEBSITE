@@ -99,7 +99,7 @@ function App() {
         
         {/* Root path "/" - Shows HomePage if logged in, redirects to login if not */}
         <Route path="/" element={
-          isLoggedIn() ? <ProtectedHomePage /> : <Navigate to="/login" />
+          isLoggedIn() ? <ProtectedHomePage /> : <PublicHomePage />
         } />
         
         {/* Professional Dashboard - only accessible by professionals */}
