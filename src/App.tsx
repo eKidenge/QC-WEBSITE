@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import PublicHomePage from './components/PublicHomePage';
 import CallPage from './pages/CallPage';
 import LoginPage from './components/LoginPage';
 import Header from './components/Header';
