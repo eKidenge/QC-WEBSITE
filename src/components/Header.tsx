@@ -1,6 +1,6 @@
 import { Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
-import qinexLogo from '@/assets/qinex.png'; // adjust path if needed
+import qinexLogo from '../assets/qinex.png';
 
 interface HeaderProps {
   user?: any;
