@@ -15,9 +15,9 @@ export default function Header({ user, onLogout }: HeaderProps) {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">DC</span>
+              <span className="text-white font-bold text-xl">QK</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">DirectConnect</span>
+            <span className="text-xl font-bold text-gray-900">QINEX KENYA</span>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
