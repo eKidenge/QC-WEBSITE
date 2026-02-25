@@ -1,4 +1,4 @@
-import { Scale, HeartPulse, GraduationCap, Stethoscope, ArrowRight } from 'lucide-react';
+import { HeartPulse, ArrowRight, Clock, Shield, Award, Users, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConsultationMatcher from './ConsultationMatcher';
@@ -27,76 +27,9 @@ interface PaymentDetails {
   categoryName: string;
 }
 
-// Default icons for different category types
-const categoryIcons: Record<string, any> = {
-  'Legal': Scale,
-  'Legal Advice': Scale,
-  'Law': Scale,
-  'Mental Health': HeartPulse,
-  'Psychology': HeartPulse,
-  'Counseling': HeartPulse,
-  'Career': GraduationCap,
-  'Career Guidance': GraduationCap,
-  'Education': GraduationCap,
-  'Medical': Stethoscope,
-  'Medical Help': Stethoscope,
-  'Health': Stethoscope,
-  'Doctor': Stethoscope
-};
-
-// Default descriptions for categories
-const defaultDescriptions: Record<string, string> = {
-  'Legal': 'Connect with licensed lawyers for urgent legal matters, disputes, contracts, and more.',
-  'Legal Advice': 'Connect with licensed lawyers for urgent legal matters, disputes, contracts, and more.',
-  'Mental Health': 'Access certified psychologists and counselors for confidential support anytime.',
-  'Career Guidance': 'Get expert advice on career paths, academic choices, and professional development.',
-  'Medical': 'Consult with verified doctors for non-emergency medical issues and health questions.',
-  'Medical Help': 'Consult with verified doctors for non-emergency medical issues and health questions.',
-  'default': 'Connect with verified professionals for expert advice and support.'
-};
-
-// Color schemes for different categories
-const colorSchemes: Record<string, any> = {
-  'Legal': {
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50',
-    iconColor: 'text-blue-600'
-  },
-  'Legal Advice': {
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50',
-    iconColor: 'text-blue-600'
-  },
-  'Mental Health': {
-    color: 'from-pink-500 to-rose-600',
-    bgColor: 'bg-pink-50',
-    iconColor: 'text-pink-600'
-  },
-  'Career Guidance': {
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-50',
-    iconColor: 'text-purple-600'
-  },
-  'Medical': {
-    color: 'from-emerald-500 to-teal-600',
-    bgColor: 'bg-emerald-50',
-    iconColor: 'text-emerald-600'
-  },
-  'Medical Help': {
-    color: 'from-emerald-500 to-teal-600',
-    bgColor: 'bg-emerald-50',
-    iconColor: 'text-emerald-600'
-  },
-  'default': {
-    color: 'from-indigo-500 to-purple-600',
-    bgColor: 'bg-indigo-50',
-    iconColor: 'text-indigo-600'
-  }
-};
-
 export default function Services() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [category, setCategory] = useState<ServiceCategory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -112,43 +45,43 @@ export default function Services() {
 
   // Fetch categories on component mount
   useEffect(() => {
-    fetchCategories();
+    fetchSingleCategory();
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchSingleCategory = async () => {
     try {
       setLoading(true);
       setError(null);
       
       const token = localStorage.getItem('token');
       
-      // If no token, we'll still show the component but with login prompt
-      if (!token) {
-        setLoading(false);
-        return;
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
       }
       
-      console.log('Fetching categories for services...');
+      console.log('Fetching mental health category...');
       
       const response = await fetch('https://dc-backend-6xlc.onrender.com/api/categories/categories/', {
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+        headers
       });
       
       if (!response.ok) {
         if (response.status === 401) {
-          console.log('Unauthorized - user needs to login');
+          console.log('Unauthorized - showing empty');
+          setCategory(null);
           setLoading(false);
           return;
         }
-        throw new Error(`Failed to load categories. Status: ${response.status}`);
+        throw new Error(`Failed to load. Status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('Services categories data received:', data);
+      console.log('Categories data received:', data);
       
       // Handle different API response formats
       let categoriesData: ServiceCategory[] = [];
@@ -156,7 +89,6 @@ export default function Services() {
       if (Array.isArray(data)) {
         categoriesData = data;
       } else if (data && typeof data === 'object') {
-        // Handle various response structures
         if (Array.isArray(data.results)) {
           categoriesData = data.results;
         } else if (Array.isArray(data.categories)) {
@@ -164,7 +96,6 @@ export default function Services() {
         } else if (Array.isArray(data.data)) {
           categoriesData = data.data;
         } else {
-          // If it's an object, try to convert to array
           const values = Object.values(data);
           if (values.length > 0 && typeof values[0] === 'object') {
             categoriesData = values as ServiceCategory[];
@@ -172,99 +103,42 @@ export default function Services() {
         }
       }
       
-      // Filter active categories and sort by order
-      const activeCategories = categoriesData
-        .filter(category => category.active !== false)
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .slice(0, 4); // Only take first 4 for display
+      // Filter active categories and find Mental Health
+      const mentalHealthCategory = categoriesData
+        .filter(cat => cat.active !== false)
+        .find(cat => 
+          cat.name.toLowerCase().includes('mental') || 
+          cat.name.toLowerCase().includes('health') ||
+          cat.name.toLowerCase().includes('psychology') ||
+          cat.name.toLowerCase().includes('counseling')
+        );
       
-      setCategories(activeCategories);
+      setCategory(mentalHealthCategory || null);
       
     } catch (err: any) {
-      console.error('Error fetching categories for services:', err);
-      setError(err.message || 'Failed to load service categories');
-      
-      // Fallback to default services if API fails
-      setCategories([
-        { 
-          id: 1, 
-          name: 'Legal Advice', 
-          description: 'Connect with licensed lawyers for urgent legal matters, disputes, contracts, and more.',
-          order: 1, 
-          active: true,
-          base_price: '600.00',
-          commission_rate: '20.00',
-          min_duration: 15,
-          max_duration: 120,
-          available_24_7: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        { 
-          id: 2, 
-          name: 'Mental Health', 
-          description: 'Access certified psychologists and counselors for confidential support anytime.',
-          order: 2, 
-          active: true,
-          base_price: '600.00',
-          commission_rate: '20.00',
-          min_duration: 15,
-          max_duration: 120,
-          available_24_7: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        { 
-          id: 3, 
-          name: 'Career Guidance', 
-          description: 'Get expert advice on career paths, academic choices, and professional development.',
-          order: 0, 
-          active: true,
-          base_price: '0.00',
-          commission_rate: '20.00',
-          min_duration: 15,
-          max_duration: 120,
-          available_24_7: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        { 
-          id: 4, 
-          name: 'Medical Help', 
-          description: 'Consult with verified doctors for non-emergency medical issues and health questions.',
-          order: 5, 
-          active: true,
-          base_price: '600.00',
-          commission_rate: '20.00',
-          min_duration: 15,
-          max_duration: 120,
-          available_24_7: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]);
+      console.error('Error fetching category:', err);
+      setError(err.message || 'Failed to load service');
+      setCategory(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleServiceClick = (categoryId: number, categoryName: string) => {
-    // Check authentication
+  const handleServiceClick = () => {
+    if (!category) return;
+    
+    // Check authentication before allowing consultation
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
       return;
     }
     
-    // Find the base price from your categories
-    const service = categories.find(cat => cat.id === categoryId);
-    const basePrice = service ? parseFloat(service.base_price) : 600.00;
-    
     // Open matcher modal
     setSelectedCategory({
-      id: categoryId,
-      name: categoryName,
-      base_price: basePrice
+      id: category.id,
+      name: category.name,
+      base_price: parseFloat(category.base_price)
     });
     setShowMatcher(true);
   };
@@ -292,131 +166,178 @@ export default function Services() {
   };
 
   const handleRetry = () => {
-    fetchCategories();
+    fetchSingleCategory();
   };
 
-  // Get icon for category
-  const getIconForCategory = (categoryName: string) => {
-    const iconKey = Object.keys(categoryIcons).find(key => 
-      categoryName.toLowerCase().includes(key.toLowerCase())
-    );
-    return iconKey ? categoryIcons[iconKey] : GraduationCap;
+  // Format price
+  const formatPrice = (price: string) => {
+    const numPrice = parseFloat(price);
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(numPrice);
   };
-
-  // Get color scheme for category
-  const getColorScheme = (categoryName: string) => {
-    const schemeKey = Object.keys(colorSchemes).find(key => 
-      categoryName.toLowerCase().includes(key.toLowerCase())
-    );
-    return schemeKey ? colorSchemes[schemeKey] : colorSchemes.default;
-  };
-
-  // Get description for category
-  const getDescription = (categoryName: string, customDescription?: string) => {
-    if (customDescription) return customDescription;
-    
-    const descKey = Object.keys(defaultDescriptions).find(key => 
-      categoryName.toLowerCase().includes(key.toLowerCase())
-    );
-    return descKey ? defaultDescriptions[descKey] : defaultDescriptions.default;
-  };
-
-  // Display services - either from backend or default
-  const displayServices = categories.length > 0 ? categories : [
-    {
-      id: 1,
-      name: 'Legal Advice',
-      description: 'Connect with licensed lawyers for urgent legal matters, disputes, contracts, and more.'
-    },
-    {
-      id: 2,
-      name: 'Mental Health',
-      description: 'Access certified psychologists and counselors for confidential support anytime.'
-    },
-    {
-      id: 3,
-      name: 'Career Guidance',
-      description: 'Get expert advice on career paths, academic choices, and professional development.'
-    },
-    {
-      id: 4,
-      name: 'Medical Help',
-      description: 'Consult with verified doctors for non-emergency medical issues and health questions.'
-    }
-  ];
 
   return (
     <>
-      <section id="services" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              Professional Help, Instantly
+      <section id="services" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#0B1120] to-[#1a2639] relative overflow-hidden min-h-screen flex items-center">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-pink-500 rounded-full filter blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-rose-500 rounded-full filter blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-50"></div>
+        </div>
+
+        <div className="max-w-6xl mx-auto relative z-10 w-full">
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-2 bg-pink-500/20 text-pink-400 rounded-full text-sm font-medium border border-pink-500/30 mb-4">
+              Our Service
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+              Professional Mental Health Support,
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 block">
+                When You Need It Most
+              </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Access verified experts across multiple categories. No searching, no waiting.
-            </p>
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-              <p className="mt-4 text-gray-600">Loading services...</p>
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-pink-500 border-t-transparent"></div>
+              <p className="mt-6 text-xl text-gray-400">Loading mental health services...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-600 mb-4">{error}</p>
+            <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 max-w-2xl mx-auto">
+              <p className="text-red-400 mb-4 text-lg">{error}</p>
               <button 
                 onClick={handleRetry}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium"
+                className="px-8 py-4 bg-pink-500 text-white rounded-xl hover:bg-pink-600 font-medium text-lg shadow-lg shadow-pink-500/25"
               >
-                Retry Loading Services
+                Retry Loading
               </button>
-              <div className="mt-8">
-                <p className="text-gray-500 text-sm mb-4">Showing default services</p>
-              </div>
+            </div>
+          ) : !category ? (
+            <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 max-w-2xl mx-auto">
+              <HeartPulse size={64} className="text-pink-400 mx-auto mb-6" />
+              <p className="text-gray-300 text-xl mb-6">Mental health services coming soon.</p>
+              <button 
+                onClick={handleRetry}
+                className="px-8 py-4 bg-pink-500 text-white rounded-xl hover:bg-pink-600 font-medium text-lg shadow-lg shadow-pink-500/25"
+              >
+                Check Again
+              </button>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayServices.map((service) => {
-                const IconComponent = getIconForCategory(service.name);
-                const colors = getColorScheme(service.name);
-                const description = getDescription(service.name, service.description);
-                
-                return (
-                  <div
-                    key={service.id || service.name}
-                    className="group relative bg-white rounded-2xl border-2 border-gray-100 p-6 hover:border-transparent hover:shadow-xl transition-all duration-300 cursor-pointer"
-                    onClick={() => handleServiceClick(service.id, service.name)}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${colors.color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`}></div>
+            <div className="max-w-4xl mx-auto">
+              {/* Main Service Card */}
+              <div className="bg-gradient-to-br from-[#1E293B] to-[#2d3a4f] rounded-3xl border border-white/10 p-8 md:p-12 shadow-2xl backdrop-blur-sm">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  {/* Left Column - Icon and Stats */}
+                  <div className="md:w-1/3">
+                    <div className="bg-gradient-to-br from-pink-500 to-rose-600 w-28 h-28 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-pink-500/30">
+                      <HeartPulse size={56} className="text-white" />
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <div className="text-pink-400 text-sm mb-1">Session Price</div>
+                        <div className="text-3xl font-bold text-white">{formatPrice(category.base_price)}</div>
+                        <div className="text-gray-400 text-sm mt-1">per session</div>
+                      </div>
+                      
+                      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <div className="flex items-center gap-2 text-gray-300 mb-2">
+                          <Clock size={18} className="text-pink-400" />
+                          <span>Duration: {category.min_duration}-{category.max_duration} min</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-300">
+                          <Shield size={18} className="text-pink-400" />
+                          <span>Licensed Therapists</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                    <div className={`${colors.bgColor} w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <IconComponent className={colors.iconColor} size={28} />
+                  {/* Right Column - Details */}
+                  <div className="md:w-2/3">
+                    <h3 className="text-4xl font-bold text-white mb-4">{category.name}</h3>
+                    
+                    <p className="text-xl text-gray-300 leading-relaxed mb-8">
+                      {category.description || 'Connect with licensed mental health professionals for confidential support, therapy sessions, and emotional wellness guidance. Available 24/7 for when you need someone to talk to.'}
+                    </p>
+
+                    {/* Features Grid */}
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                      <div className="flex items-center gap-3 text-gray-300 bg-white/5 rounded-xl p-3">
+                        <Users className="text-pink-400" size={20} />
+                        <span>Licensed Experts</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300 bg-white/5 rounded-xl p-3">
+                        <Clock className="text-pink-400" size={20} />
+                        <span>24/7 Available</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300 bg-white/5 rounded-xl p-3">
+                        <Shield className="text-pink-400" size={20} />
+                        <span>100% Confidential</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-300 bg-white/5 rounded-xl p-3">
+                        <Star className="text-pink-400" size={20} />
+                        <span>Verified Professionals</span>
+                      </div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{service.name}</h3>
-                    <p className="text-gray-600 leading-relaxed">{description}</p>
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <button 
+                        className="flex-1 group px-8 py-5 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-xl hover:from-pink-600 hover:to-rose-700 transition-all font-semibold text-lg flex items-center justify-center gap-2 shadow-xl shadow-pink-500/30"
+                        onClick={handleServiceClick}
+                      >
+                        Start Session Now
+                        <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
+                      </button>
+                      <button className="flex-1 px-8 py-5 bg-white/10 text-white border-2 border-white/20 rounded-xl hover:bg-white/20 transition-all font-semibold text-lg backdrop-blur-sm">
+                        Learn More
+                      </button>
+                    </div>
 
-                    <button className={`mt-6 text-sm font-semibold ${colors.iconColor} group-hover:gap-2 flex items-center transition-all`}>
-                      Connect Now
-                      <ArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" size={16} />
-                    </button>
+                    {/* Trust Indicators */}
+                    <div className="mt-8 pt-6 border-t border-white/10">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <Award className="text-pink-400" size={20} />
+                          <span className="text-sm text-gray-400">Licensed & Verified</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Shield className="text-pink-400" size={20} />
+                          <span className="text-sm text-gray-400">HIPAA Compliant</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="text-pink-400" size={20} />
+                          <span className="text-sm text-gray-400">100+ Therapists</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+              </div>
 
-          {!loading && !error && categories.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">No active services available. Please check back later.</p>
-              <button 
-                onClick={handleRetry}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium"
-              >
-                Refresh Services
-              </button>
+              {/* Additional Info Cards */}
+              <div className="grid md:grid-cols-3 gap-6 mt-8">
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <h4 className="text-white font-semibold mb-2">How It Works</h4>
+                  <p className="text-gray-400 text-sm">Connect with a therapist in minutes. No appointments needed.</p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <h4 className="text-white font-semibold mb-2">Secure Payments</h4>
+                  <p className="text-gray-400 text-sm">Pay securely per session. No subscriptions or hidden fees.</p>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <h4 className="text-white font-semibold mb-2">Any Device</h4>
+                  <p className="text-gray-400 text-sm">Access from your phone, tablet, or computer. Wherever you are.</p>
+                </div>
+              </div>
             </div>
           )}
         </div>

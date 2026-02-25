@@ -7,25 +7,25 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-xl">DC</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-xl">MH</span>
               </div>
-              <span className="text-xl font-bold text-white">DirectConnect</span>
+              <span className="text-xl font-bold text-white">Mental Health Connect</span>
             </div>
             <p className="text-gray-400 mb-4">
-              Skip the search, get the answer. Instant access to verified professionals.
+              Your trusted platform for connecting with licensed mental health professionals in Kenya.
             </p>
             <div className="flex space-x-3">
-              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-lg flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-colors">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-lg flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-colors">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-lg flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-colors">
                 <Instagram size={20} />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-lg flex items-center justify-center transition-colors">
+              <a href="#" className="w-10 h-10 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition-colors">
                 <Linkedin size={20} />
               </a>
             </div>
@@ -34,20 +34,21 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Services</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">Legal Advice</a></li>
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">Mental Health</a></li>
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">Career Guidance</a></li>
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">Medical Help</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Individual Therapy</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Couples Counseling</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Teen Mental Health</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Stress & Anxiety</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Depression Support</a></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-semibold mb-4">Company</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">About Us</a></li>
-              <li><a href="#professionals" className="hover:text-emerald-500 transition-colors">For Professionals</a></li>
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-emerald-500 transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">About Us</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">For Therapists</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-pink-500 transition-colors">Terms of Service</a></li>
             </ul>
           </div>
 
@@ -55,15 +56,15 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-4">Contact</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <Mail size={20} className="mt-0.5 text-emerald-500" />
-                <span>info@directconnect.co.ke</span>
+                <Mail size={20} className="mt-0.5 text-pink-500" />
+                <span>support@mentalhealth.co.ke</span>
               </li>
               <li className="flex items-start gap-2">
-                <Phone size={20} className="mt-0.5 text-emerald-500" />
+                <Phone size={20} className="mt-0.5 text-pink-500" />
                 <span>+254 700 123 456</span>
               </li>
               <li className="flex items-start gap-2">
-                <MapPin size={20} className="mt-0.5 text-emerald-500" />
+                <MapPin size={20} className="mt-0.5 text-pink-500" />
                 <span>Nairobi, Kenya</span>
               </li>
             </ul>
@@ -73,12 +74,12 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">
-              &copy; 2025 DirectConnect. All rights reserved.
+              &copy; 2025 Mental Health Connect. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
-              <a href="#" className="hover:text-emerald-500 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-emerald-500 transition-colors">Terms</a>
-              <a href="#" className="hover:text-emerald-500 transition-colors">Cookies</a>
+              <a href="#" className="hover:text-pink-500 transition-colors">Privacy</a>
+              <a href="#" className="hover:text-pink-500 transition-colors">Terms</a>
+              <a href="#" className="hover:text-pink-500 transition-colors">Cookies</a>
             </div>
           </div>
         </div>
