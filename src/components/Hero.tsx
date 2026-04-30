@@ -224,7 +224,7 @@ export default function Hero() {
               {/* All badges removed */}
 
               <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
-                Your Expert Support, Just a Click Away
+                Your Expert Support,
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 block">
                   Just a Click Away
                 </span>
