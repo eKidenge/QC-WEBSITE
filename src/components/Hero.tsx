@@ -224,14 +224,14 @@ export default function Hero() {
               {/* All badges removed */}
 
               <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
-                Your Mental Well-being,
+                Your Expert Support, Just a Click Away
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 block">
                   Just a Click Away
                 </span>
               </h1>
 
               <p className="text-xl text-gray-300 leading-relaxed max-w-lg">
-                Skip the waiting rooms. Connect with certified psychologists and counsellors in minutes. Private, confidential, and accessible 24/7
+                Skip the waiting rooms. Get instant access to verified experts across different professional domains. Private, secure, and available 24/7.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -239,11 +239,11 @@ export default function Hero() {
                   className="group px-8 py-4 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-all font-semibold text-lg flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25"
                   onClick={handleConnectNow}
                 >
-                  Talk to a Counsellor Now
+                  Speak to a Verified Expert Now
                   <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
                 </button>
                 <button className="px-8 py-4 bg-white/10 text-white border-2 border-white/20 rounded-xl hover:bg-white/20 transition-all font-semibold text-lg backdrop-blur-sm">
-                  Browse Specialists
+                  Explore Verified Experts
                 </button>
               </div>
 
