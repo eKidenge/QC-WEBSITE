@@ -248,26 +248,26 @@ export default function Hero() {
               </div>
 
               <div className="pt-4">
-                <h3 className="text-white text-lg font-semibold mb-3">Our Specialized Support</h3>
+                <h3 className="text-white text-lg font-semibold mb-3">Our Professional Services</h3>
                 <div className="grid grid-cols-2 gap-3 max-w-md">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-300">
                       <div className="w-1.5 h-1.5 bg-pink-400 rounded-full"></div>
-                      <span>Personal Counselling</span>
+                      <span>Personal Support</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-300">
                       <div className="w-1.5 h-1.5 bg-pink-400 rounded-full"></div>
-                      <span>Relationship Support</span>
+                      <span>Relationship Guidance</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-gray-300">
                       <div className="w-1.5 h-1.5 bg-pink-400 rounded-full"></div>
-                      <span>Career Wellness</span>
+                      <span>Career & Professional Coaching</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-300">
                       <div className="w-1.5 h-1.5 bg-pink-400 rounded-full"></div>
-                      <span>Youth & Student Support</span>
+                      <span>Youth & Student Development</span>
                     </div>
                   </div>
                 </div>
@@ -276,7 +276,7 @@ export default function Hero() {
               <div className="pt-2 flex items-center gap-6">
                 <div className="flex items-center gap-2 text-pink-400">
                   <Shield size={18} />
-                  <span className="text-sm text-gray-300">Verified Experts</span>
+                  <span className="text-sm text-gray-300">Verified Professionals</span>
                 </div>
                 <div className="flex items-center gap-2 text-pink-400">
                   <Clock size={18} />
@@ -357,19 +357,19 @@ export default function Hero() {
                   <h4 className="text-white text-sm font-medium mb-3">Why Trust QINEX?</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">Verified Expertise</span>
+                      <span className="text-gray-400">Verified Professionals</span>
                       <span className="text-pink-400">✓</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">Full Anonymity</span>
+                      <span className="text-gray-400">Full Privacy & Confidentiality</span>
                       <span className="text-pink-400">✓</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">HIPAA Integrated</span>
+                      <span className="text-gray-400">Secure Communication Standards</span>
                       <span className="text-pink-400">✓</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">MISA Integrated</span>
+                      <span className="text-gray-400">Compliance with Industry Best Practices</span>
                       <span className="text-pink-400">✓</span>
                     </div>
                   </div>
@@ -384,7 +384,7 @@ export default function Hero() {
 
                 <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
                   <span>Privacy Policy</span>
-                  <span>Tele-health Consent</span>
+                  <span>TeleConnect Consent</span>
                 </div>
 
                 <div className="mt-4 text-center">
