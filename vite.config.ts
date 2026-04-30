@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg', 'icons/*.png'],
       manifest: {
-        name: 'DirectConnect',
-        short_name: 'DirectConnect',
-        description: 'Connect, collaborate, and grow your professional network with DirectConnect.',
+        name: 'Qinex Kenya',
+        short_name: 'Qinex',
+        description: 'On-demand professional services platform connecting users with verified experts across multiple fields.',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',

@@ -196,7 +196,7 @@ export default function Services() {
               Our Service
             </span>
             <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-              Professional Mental Health Support,
+              On-demand Professional Support,
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 block">
                 When You Need It Most
               </span>
@@ -206,7 +206,7 @@ export default function Services() {
           {loading ? (
             <div className="text-center py-20">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-pink-500 border-t-transparent"></div>
-              <p className="mt-6 text-xl text-gray-400">Loading mental health services...</p>
+              <p className="mt-6 text-xl text-gray-400">Loading available services...</p>
             </div>
           ) : error ? (
             <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 max-w-2xl mx-auto">
@@ -221,7 +221,7 @@ export default function Services() {
           ) : !category ? (
             <div className="text-center py-16 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 max-w-2xl mx-auto">
               <HeartPulse size={64} className="text-pink-400 mx-auto mb-6" />
-              <p className="text-gray-300 text-xl mb-6">Mental health services coming soon.</p>
+              <p className="text-gray-300 text-xl mb-6">Professional services coming soon.</p>
               <button 
                 onClick={handleRetry}
                 className="px-8 py-4 bg-pink-500 text-white rounded-xl hover:bg-pink-600 font-medium text-lg shadow-lg shadow-pink-500/25"
@@ -254,7 +254,7 @@ export default function Services() {
                         </div>
                         <div className="flex items-center gap-2 text-gray-300">
                           <Shield size={18} className="text-pink-400" />
-                          <span>Licensed Therapists</span>
+                          <span>Certified Experts</span>
                         </div>
                       </div>
                     </div>
@@ -311,11 +311,11 @@ export default function Services() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Shield className="text-pink-400" size={20} />
-                          <span className="text-sm text-gray-400">HIPAA Compliant</span>
+                          <span className="text-sm text-gray-400">Secure & Private Services</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Users className="text-pink-400" size={20} />
-                          <span className="text-sm text-gray-400">100+ Therapists</span>
+                          <span className="text-sm text-gray-400">100+ Verified Professionals</span>
                         </div>
                       </div>
                     </div>
@@ -327,7 +327,7 @@ export default function Services() {
               <div className="grid md:grid-cols-3 gap-6 mt-8">
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
                   <h4 className="text-white font-semibold mb-2">How It Works</h4>
-                  <p className="text-gray-400 text-sm">Connect with a therapist in minutes. No appointments needed.</p>
+                  <p className="text-gray-400 text-sm">Connect with a professional in minutes. No appointments needed.</p>
                 </div>
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
                   <h4 className="text-white font-semibold mb-2">Secure Payments</h4>
