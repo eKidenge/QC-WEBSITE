@@ -12,7 +12,8 @@ export default defineConfig({
       manifest: {
         name: 'Qinex Kenya',
         short_name: 'Qinex',
-        description: 'On-demand professional services platform connecting users with verified experts across multiple fields.',
+        description:
+          'On-demand professional services platform connecting users with verified experts across multiple fields.',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
@@ -23,56 +24,57 @@ export default defineConfig({
             src: '/icons/icon-72x72.png',
             sizes: '72x72',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-96x96.png',
             sizes: '96x96',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-128x128.png',
             sizes: '128x128',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-144x144.png',
             sizes: '144x144',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-152x152.png',
             sizes: '152x152',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-384x384.png',
             sizes: '384x384',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: '/icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
+            purpose: 'any maskable',
+          },
+        ],
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 👈 ADD THIS (10MB)
-        
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -81,9 +83,9 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
           },
           {
             urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
@@ -92,32 +94,44 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
-          }
-        ]
-      }
-    })
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
+          },
+        ],
+      },
+    }),
   ],
+
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  base: '/', // Important for Vercel
+
+  base: '/',
+
   build: {
     outDir: 'dist',
-    sourcemap: false, // Faster builds
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'zego-vendor': ['@zegocloud/zego-uikit-prebuilt', 'zego-zim-web'],
-        }
-      }
-    }
+          'zego-vendor': [
+            '@zegocloud/zego-uikit-prebuilt',
+            'zego-zim-web',
+          ],
+        },
+      },
+    },
   },
+
   server: {
     port: 5173,
-    host: true, // Allow external access
-  }
+    host: true,
+  },
+
+  preview: {
+    host: true,
+    allowedHosts: ['qc-website.onrender.com'],
+  },
 });
